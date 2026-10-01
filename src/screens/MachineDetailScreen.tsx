@@ -3,6 +3,7 @@ import { useFactory } from '../context/FactoryContext';
 import { Machine3DViewer } from '../components/Machine3DViewer';
 import { MetricTrendChart } from '../components/MetricTrendChart';
 import { PredictiveHealthScore } from '../components/PredictiveHealthScore';
+import { MaintenanceScheduler } from '../components/MaintenanceScheduler';
 import { MaintenanceLog } from '../components/MaintenanceLog';
 import {
   Zap,
@@ -378,6 +379,9 @@ export const MachineDetailScreen: React.FC = () => {
           activeMetric={activeChartMetric}
         />
       </div>
+
+      {/* Maintenance Scheduler: Recurring Service Intervals & Deadlines */}
+      <MaintenanceScheduler machine={selectedMachine} />
 
       {/* Maintenance & Service Log Section */}
       <MaintenanceLog machine={selectedMachine} />

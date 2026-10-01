@@ -6,6 +6,7 @@ import {
   ChatMessage,
   PredictiveHealthResult,
   MaintenanceRecord,
+  MaintenanceScheduleItem,
 } from '../types';
 import { translations, TranslationDictionary } from '../i18n/translations';
 
@@ -49,6 +50,12 @@ interface FactoryContextType {
   toggleTheme: () => void;
   maintenanceLogs: MaintenanceRecord[];
   addMaintenanceRecord: (record: Omit<MaintenanceRecord, 'id'>) => void;
+  maintenanceSchedules: MaintenanceScheduleItem[];
+  addMaintenanceSchedule: (schedule: Omit<MaintenanceScheduleItem, 'id'>) => void;
+  updateMaintenanceSchedule: (id: string, updates: Partial<MaintenanceScheduleItem>) => void;
+  deleteMaintenanceSchedule: (id: string) => void;
+  completeMaintenanceSchedule: (id: string, notes?: string) => void;
+  rescheduleMaintenanceItem: (id: string, daysToAdd: number) => void;
 }
 
 export function calculateMachineHealthScore(
@@ -399,6 +406,385 @@ const INITIAL_MAINTENANCE_LOGS: MaintenanceRecord[] = [
   },
 ];
 
+export const INITIAL_MAINTENANCE_SCHEDULES: MaintenanceScheduleItem[] = [
+  // ==========================================
+  // Machine 1: Hydraulic Press 200T (m1)
+  // ==========================================
+  {
+    id: 'sched-1',
+    machineId: 'm1',
+    title: 'Hydraulic Return Filter & Fluid Quality Check',
+    partName: 'Suction Line Return Oil Filter Element',
+    partNumber: 'HY-200T-04',
+    partCategory: 'Hydraulic',
+    serviceType: 'replacement',
+    priority: 'high',
+    recurrence: {
+      frequency: 90,
+      unit: 'days',
+      label: 'Quarterly (90 Days)',
+    },
+    lastServicedDate: '2026-07-06',
+    nextDueDate: '2026-10-04',
+    assignedTechnician: 'Ramesh Patil',
+    estimatedDowntimeHours: 2.5,
+    estimatedCostINR: 6500,
+    checklist: [
+      'Depressurize hydraulic reservoir before unscrewing cap',
+      'Inspect 10-micron pleated filter element for metallic particulate',
+      'Flush filter canister and install new NBR sealing gasket',
+      'Verify return pressure differential indicator (<1.2 bar)',
+    ],
+    status: 'due_soon',
+    notes: 'Crucial for maintaining proportional valve cleanliness and preventing spool stiction.',
+  },
+  {
+    id: 'sched-2',
+    machineId: 'm1',
+    title: 'Ram Guide Bushing Lubrication & Gib Clearance',
+    partName: 'Ram Guide Bushings & Bronze Gibs',
+    partNumber: 'RGB-200',
+    partCategory: 'Mechanical',
+    serviceType: 'lubrication',
+    priority: 'medium',
+    recurrence: {
+      frequency: 30,
+      unit: 'days',
+      label: 'Monthly (30 Days)',
+    },
+    lastServicedDate: '2026-09-02',
+    nextDueDate: '2026-10-02',
+    assignedTechnician: 'Sunil Sharma',
+    estimatedDowntimeHours: 1.0,
+    estimatedCostINR: 1800,
+    checklist: [
+      'Purge contaminated grease from all 4 column grease ports',
+      'Inject fresh NLGI-2 lithium complex grease with MoS2',
+      'Measure column clearance with feeler gauge (allowable: 0.05 - 0.08 mm)',
+      'Wipe down guide pillars and check for vertical scoring',
+    ],
+    status: 'due_soon',
+    notes: 'Keeps stamping die punch in true perpendicular alignment.',
+  },
+  {
+    id: 'sched-3',
+    machineId: 'm1',
+    title: 'Main Cylinder Gland Packing & Chevron Seal Overhaul',
+    partName: 'Main Cylinder Gland Packing Kit',
+    partNumber: 'CGP-44',
+    partCategory: 'Hydraulic',
+    serviceType: 'inspection',
+    priority: 'high',
+    recurrence: {
+      frequency: 60,
+      unit: 'days',
+      label: 'Bi-Monthly (60 Days)',
+    },
+    lastServicedDate: '2026-07-28',
+    nextDueDate: '2026-09-26',
+    assignedTechnician: 'Ramesh Patil',
+    estimatedDowntimeHours: 2.0,
+    estimatedCostINR: 3200,
+    checklist: [
+      'Inspect piston rod for micro-pitting or hydraulic oil weeping',
+      'Torque gland flange retaining bolts in star pattern to 120 Nm',
+      'Check gland drain line for excess internal leakage',
+      'Test full stroke pressure holding at 210 bar for 3 minutes',
+    ],
+    status: 'overdue',
+    notes: 'Overdue by 5 days. Minor seepage observed at shift change; requires torque check.',
+  },
+  {
+    id: 'sched-4',
+    machineId: 'm1',
+    title: 'Main Hydraulic Pump Drive Motor Bearing Grease',
+    partName: 'Drive Motor Bearings (Drive End / Non-Drive End)',
+    partNumber: 'SKF 6312-2Z',
+    partCategory: 'Mechanical',
+    serviceType: 'lubrication',
+    priority: 'medium',
+    recurrence: {
+      frequency: 180,
+      unit: 'days',
+      label: 'Semi-Annual (180 Days)',
+    },
+    lastServicedDate: '2026-05-15',
+    nextDueDate: '2026-11-11',
+    assignedTechnician: 'Anil Deshmukh',
+    estimatedDowntimeHours: 1.5,
+    estimatedCostINR: 2400,
+    checklist: [
+      'Clean grease fittings and relief plugs',
+      'Pump 30g polyurea high-temp synthetic bearing grease per bearing',
+      'Record MPU6050 baseline vibration at 1450 RPM',
+      'Check motor casing temperature with DS18B20 (<65°C)',
+    ],
+    status: 'upcoming',
+    notes: 'Scheduled for upcoming scheduled shutdown bay maintenance.',
+  },
+  {
+    id: 'sched-5',
+    machineId: 'm1',
+    title: 'Proportional Directional Solenoid Valve Dynamic Response Calibration',
+    partName: 'Proportional Solenoid Valve Cartridge',
+    partNumber: 'REX-4WE',
+    partCategory: 'Electrical',
+    serviceType: 'predictive',
+    priority: 'critical',
+    recurrence: {
+      frequency: 120,
+      unit: 'days',
+      label: 'Every 4 Months (120 Days)',
+    },
+    lastServicedDate: '2026-06-20',
+    nextDueDate: '2026-10-18',
+    assignedTechnician: 'Sachin Kulkarni',
+    estimatedDowntimeHours: 3.0,
+    estimatedCostINR: 8500,
+    checklist: [
+      'Verify coil resistance (30 ohms ± 5%)',
+      'Inspect pilot valve spool movement and null position drift',
+      'Calibrate ramp rate in hydraulic control PLC',
+      'Test emergency stop pressure dump response time (<120ms)',
+    ],
+    status: 'upcoming',
+    notes: 'Critical safety circuit. Links to IoT pressure telemetry anomaly detection.',
+  },
+
+  // ==========================================
+  // Machine 2: Rotary Screw Compressor 45kW (m2)
+  // ==========================================
+  {
+    id: 'sched-6',
+    machineId: 'm2',
+    title: 'Air-Oil Separator Cartridge Replacement & Scavenge Orifice',
+    partName: 'Air-Oil Separator Element',
+    partNumber: 'AOS-450',
+    partCategory: 'Pneumatic',
+    serviceType: 'replacement',
+    priority: 'critical',
+    recurrence: {
+      frequency: 180,
+      unit: 'days',
+      label: 'Semi-Annual (180 Days)',
+    },
+    lastServicedDate: '2026-04-01',
+    nextDueDate: '2026-09-28',
+    assignedTechnician: 'Vikas Shinde',
+    estimatedDowntimeHours: 3.5,
+    estimatedCostINR: 14800,
+    checklist: [
+      'Confirm pressure vessel is zero-pressure vented and locked out',
+      'Remove top cover bolts and extract spent spin-on/drop-in separator',
+      'Clean oil scavenging return line glass sight tube and brass orifice',
+      'Verify electrical earth continuity staple to prevent static spark',
+    ],
+    status: 'overdue',
+    notes: 'Overdue by 3 days. High priority — degraded separator causes oil carryover into plant air headers.',
+  },
+  {
+    id: 'sched-7',
+    machineId: 'm2',
+    title: 'Poly-V Drive Belt Tensioning & Pulley Alignment',
+    partName: 'Drive V-Belts Set (Gates Poly-V 8PK)',
+    partNumber: 'GATES-8PK-1550',
+    partCategory: 'Mechanical',
+    serviceType: 'routine',
+    priority: 'high',
+    recurrence: {
+      frequency: 30,
+      unit: 'days',
+      label: 'Monthly (30 Days)',
+    },
+    lastServicedDate: '2026-09-05',
+    nextDueDate: '2026-10-05',
+    assignedTechnician: 'Vikas Shinde',
+    estimatedDowntimeHours: 1.5,
+    estimatedCostINR: 3600,
+    checklist: [
+      'Inspect belt flanks for glaze, oil saturation, or rib separation',
+      'Measure tension with acoustic frequency meter (target: 480 N)',
+      'Check motor slide-rail adjustment bolts and locknuts',
+      'Check laser radial and axial pulley co-planarity (<0.5 deg)',
+    ],
+    status: 'due_soon',
+    notes: 'Directly linked to current draw spikes and vibration harmonics.',
+  },
+  {
+    id: 'sched-8',
+    machineId: 'm2',
+    title: 'Air Intake Heavy-Duty Filter Cartridge Reverse Blowdown',
+    partName: 'Air Intake Filter Cartridge',
+    partNumber: 'AIF-88',
+    partCategory: 'Pneumatic',
+    serviceType: 'inspection',
+    priority: 'medium',
+    recurrence: {
+      frequency: 14,
+      unit: 'days',
+      label: 'Bi-Weekly (14 Days)',
+    },
+    lastServicedDate: '2026-09-24',
+    nextDueDate: '2026-10-08',
+    assignedTechnician: 'Ganesh More',
+    estimatedDowntimeHours: 0.5,
+    estimatedCostINR: 950,
+    checklist: [
+      'Unclamp intake filter canister cover',
+      'Blow compressed air (<2 bar) from inside out to dislodge foundry dust',
+      'Inspect silicone gasket ring for tight seal',
+      'Inspect intake unloader butterfly valve spring',
+    ],
+    status: 'upcoming',
+    notes: 'Prevents abrasive dust from entering twin precision screw air-end.',
+  },
+  {
+    id: 'sched-9',
+    machineId: 'm2',
+    title: 'Thermostatic Bypass Valve Core & Aluminum Oil Cooler Flush',
+    partName: 'Thermostatic Oil Valve Core (71°C)',
+    partNumber: 'TVC-71',
+    partCategory: 'Thermal',
+    serviceType: 'routine',
+    priority: 'medium',
+    recurrence: {
+      frequency: 90,
+      unit: 'days',
+      label: 'Quarterly (90 Days)',
+    },
+    lastServicedDate: '2026-07-20',
+    nextDueDate: '2026-10-18',
+    assignedTechnician: 'Vikas Shinde',
+    estimatedDowntimeHours: 2.0,
+    estimatedCostINR: 4200,
+    checklist: [
+      'Test thermostat wax element activation in 75°C water bath',
+      'Blow down external radiator cooling fins with air lance',
+      'Verify temperature delta between oil cooler inlet and outlet (>14°C)',
+    ],
+    status: 'upcoming',
+    notes: 'Keeps synthetic oil temperature below 92°C to prevent thermal breakdown.',
+  },
+
+  // ==========================================
+  // Machine 3: High-Speed Polishing Motor 15HP (m3)
+  // ==========================================
+  {
+    id: 'sched-10',
+    machineId: 'm3',
+    title: 'Dynamic Rotor High-Speed Bearings Vibration & Grease Injection',
+    partName: 'Dynamic Rotor Bearings (SKF Explorer Series)',
+    partNumber: 'SKF 6205-2Z',
+    partCategory: 'Mechanical',
+    serviceType: 'lubrication',
+    priority: 'high',
+    recurrence: {
+      frequency: 30,
+      unit: 'days',
+      label: 'Monthly (30 Days)',
+    },
+    lastServicedDate: '2026-09-08',
+    nextDueDate: '2026-10-08',
+    assignedTechnician: 'Anil Deshmukh',
+    estimatedDowntimeHours: 1.0,
+    estimatedCostINR: 2100,
+    checklist: [
+      'Measure RMS vibration across horizontal, vertical, and axial planes',
+      'Inject 15g Kluber high-speed synthetic spindle grease',
+      'Check spindle shaft runout with dial gauge (<0.015 mm)',
+    ],
+    status: 'due_soon',
+    notes: 'High RPM finishing line spindle requires strict grease interval.',
+  },
+  {
+    id: 'sched-11',
+    machineId: 'm3',
+    title: 'Carbon Brush Length & Commutator Mica Undercut Inspection',
+    partName: 'Carbon Brush Assembly & Constant-Force Springs',
+    partNumber: 'CB-15H',
+    partCategory: 'Electrical',
+    serviceType: 'inspection',
+    priority: 'medium',
+    recurrence: {
+      frequency: 45,
+      unit: 'days',
+      label: 'Every 45 Days',
+    },
+    lastServicedDate: '2026-08-15',
+    nextDueDate: '2026-09-29',
+    assignedTechnician: 'Sachin Kulkarni',
+    estimatedDowntimeHours: 1.0,
+    estimatedCostINR: 1500,
+    checklist: [
+      'Remove brush inspection caps and measure brush length (min: 12 mm)',
+      'Blow out carbon graphite dust using clean dry compressed air',
+      'Inspect copper commutator segments for grooving or sparking pitting',
+    ],
+    status: 'overdue',
+    notes: 'Overdue by 2 days. Brushes near wear limit; swap planned for current shift.',
+  },
+
+  // ==========================================
+  // Machine 4: Medium Induction Furnace 100kW (m4)
+  // ==========================================
+  {
+    id: 'sched-12',
+    machineId: 'm4',
+    title: 'Water-Cooling Manifold Descaling & High-Current Cable Flush',
+    partName: 'Water-Cooling Manifold & Reinforced Silicone Hoses',
+    partNumber: 'WCM-100',
+    partCategory: 'Thermal',
+    serviceType: 'routine',
+    priority: 'critical',
+    recurrence: {
+      frequency: 30,
+      unit: 'days',
+      label: 'Monthly (30 Days)',
+    },
+    lastServicedDate: '2026-09-04',
+    nextDueDate: '2026-10-04',
+    assignedTechnician: 'Sandeep Jadhav',
+    estimatedDowntimeHours: 2.0,
+    estimatedCostINR: 4800,
+    checklist: [
+      'Measure coolant water flow rate across all 8 parallel cooling loops (>45 LPM)',
+      'Flush scale buildup using mild food-grade citric acid circulation',
+      'Inspect high-current water-cooled power leads for insulation chafing',
+      'Verify water temperature differential interlock trip test (<62°C)',
+    ],
+    status: 'due_soon',
+    notes: 'Crucial for coil protection; calcium scale causes rapid hot spot induction trips.',
+  },
+  {
+    id: 'sched-13',
+    machineId: 'm4',
+    title: 'Refractory Crucible Sintering & Inner Lining Wall Inspection',
+    partName: 'Alumina Refractory Crucible Lining',
+    partNumber: 'RCL-Alumina-88',
+    partCategory: 'Structural',
+    serviceType: 'inspection',
+    priority: 'critical',
+    recurrence: {
+      frequency: 14,
+      unit: 'days',
+      label: 'Bi-Weekly (14 Days)',
+    },
+    lastServicedDate: '2026-09-18',
+    nextDueDate: '2026-10-02',
+    assignedTechnician: 'Sandeep Jadhav',
+    estimatedDowntimeHours: 3.0,
+    estimatedCostINR: 12000,
+    checklist: [
+      'Visual inspection of crucible inner wall for molten metal penetration cracks',
+      'Ultrasonic wall thickness measurement at bottom radius',
+      'Test ground-fault leakage detector probe to verify coil protection',
+      'Patch surface hairline thermal spalling with high-alumina slurry paste',
+    ],
+    status: 'due_soon',
+    notes: 'Due tomorrow. Essential for foundry melt safety against coil breakthrough.',
+  },
+];
+
 const FactoryContext = createContext<FactoryContextType | undefined>(undefined);
 
 export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -415,6 +801,7 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [servicedMachineIds, setServicedMachineIds] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceRecord[]>(INITIAL_MAINTENANCE_LOGS);
+  const [maintenanceSchedules, setMaintenanceSchedules] = useState<MaintenanceScheduleItem[]>(INITIAL_MAINTENANCE_SCHEDULES);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
@@ -431,6 +818,106 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (record.status === 'completed') {
       simulateService(record.machineId);
     }
+  };
+
+  const addMaintenanceSchedule = (schedule: Omit<MaintenanceScheduleItem, 'id'>) => {
+    const newSchedule: MaintenanceScheduleItem = {
+      ...schedule,
+      id: `sched-${Date.now()}`,
+    };
+    setMaintenanceSchedules((prev) => [newSchedule, ...prev]);
+  };
+
+  const updateMaintenanceSchedule = (id: string, updates: Partial<MaintenanceScheduleItem>) => {
+    setMaintenanceSchedules((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
+    );
+  };
+
+  const deleteMaintenanceSchedule = (id: string) => {
+    setMaintenanceSchedules((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const completeMaintenanceSchedule = (id: string, notes?: string) => {
+    setMaintenanceSchedules((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+
+        // Calculate next due date from frequency & unit
+        const today = new Date('2026-10-01');
+        const todayStr = '2026-10-01';
+
+        let daysToAdd = 30;
+        if (item.recurrence.unit === 'weeks') {
+          daysToAdd = item.recurrence.frequency * 7;
+        } else if (item.recurrence.unit === 'months') {
+          daysToAdd = item.recurrence.frequency * 30;
+        } else if (item.recurrence.unit === 'days') {
+          daysToAdd = item.recurrence.frequency;
+        } else if (item.recurrence.unit === 'operating_hours') {
+          daysToAdd = Math.max(7, Math.round(item.recurrence.frequency / 16));
+        } else if (item.recurrence.unit === 'cycles') {
+          daysToAdd = Math.max(7, Math.round(item.recurrence.frequency / 1000));
+        }
+
+        const nextDate = new Date(today.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+        const nextDueDateStr = nextDate.toISOString().split('T')[0];
+
+        // Also add an entry to maintenanceLogs so user sees it in the historical records!
+        const logRecord: Omit<MaintenanceRecord, 'id'> = {
+          machineId: item.machineId,
+          serviceDate: today.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          technicianName: item.assignedTechnician || 'Shopfloor Maintenance Crew',
+          technicianRole: 'Certified Maintenance Specialist',
+          serviceType: item.serviceType === 'routine' ? 'routine' : item.serviceType === 'overhaul' ? 'overhaul' : 'predictive',
+          technicianNotes: notes || `Scheduled recurring service completed for ${item.partName}. Checkpoints verified: ${item.checklist.join('; ')}. Recurrence interval: ${item.recurrence.label}.`,
+          partReplacements: [
+            {
+              partName: item.partName,
+              partNumber: item.partNumber || 'OEM-REF',
+              quantity: 1,
+              costINR: item.estimatedCostINR,
+            },
+          ],
+          totalCostINR: item.estimatedCostINR,
+          downtimeHours: item.estimatedDowntimeHours,
+          healthScoreBefore: 86,
+          healthScoreAfter: 97,
+          nextScheduledDate: nextDueDateStr,
+          status: 'completed',
+        };
+        addMaintenanceRecord(logRecord);
+
+        return {
+          ...item,
+          lastServicedDate: todayStr,
+          nextDueDate: nextDueDateStr,
+          status: 'upcoming',
+        };
+      })
+    );
+  };
+
+  const rescheduleMaintenanceItem = (id: string, daysToAdd: number) => {
+    setMaintenanceSchedules((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const currentNext = new Date(item.nextDueDate);
+        const newDate = new Date(currentNext.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+        const newDueDateStr = newDate.toISOString().split('T')[0];
+
+        const today = new Date('2026-10-01');
+        const diffDays = Math.ceil((newDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        const status: MaintenanceScheduleItem['status'] =
+          diffDays < 0 ? 'overdue' : diffDays <= 7 ? 'due_soon' : 'upcoming';
+
+        return {
+          ...item,
+          nextDueDate: newDueDateStr,
+          status,
+        };
+      })
+    );
   };
 
   // Mock Predictive Algorithm inside FactoryContext:
@@ -794,6 +1281,12 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         toggleTheme,
         maintenanceLogs,
         addMaintenanceRecord,
+        maintenanceSchedules,
+        addMaintenanceSchedule,
+        updateMaintenanceSchedule,
+        deleteMaintenanceSchedule,
+        completeMaintenanceSchedule,
+        rescheduleMaintenanceItem,
       }}
     >
       {children}

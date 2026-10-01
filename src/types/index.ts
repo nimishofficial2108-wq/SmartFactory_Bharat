@@ -122,3 +122,29 @@ export interface ChatMessage {
     machineId?: string;
   };
 }
+
+export type RecurringIntervalUnit = 'days' | 'weeks' | 'months' | 'operating_hours' | 'cycles';
+
+export interface MaintenanceScheduleItem {
+  id: string;
+  machineId: string;
+  title: string;
+  partName: string;
+  partNumber?: string;
+  partCategory: 'Mechanical' | 'Hydraulic' | 'Electrical' | 'Pneumatic' | 'Thermal' | 'Lubrication' | 'Structural';
+  serviceType: 'routine' | 'predictive' | 'lubrication' | 'inspection' | 'replacement' | 'overhaul';
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  recurrence: {
+    frequency: number; // e.g. 30, 90, 180
+    unit: RecurringIntervalUnit;
+    label: string; // e.g. "Every 30 Days", "Quarterly (90 Days)"
+  };
+  lastServicedDate: string; // "YYYY-MM-DD" e.g. "2026-09-10"
+  nextDueDate: string; // "YYYY-MM-DD" e.g. "2026-10-10"
+  assignedTechnician?: string;
+  estimatedDowntimeHours: number;
+  estimatedCostINR: number;
+  checklist: string[];
+  status: 'upcoming' | 'due_soon' | 'overdue' | 'completed';
+  notes?: string;
+}
