@@ -3,6 +3,7 @@ import { useFactory } from '../context/FactoryContext';
 import { Machine3DViewer } from '../components/Machine3DViewer';
 import { MetricTrendChart } from '../components/MetricTrendChart';
 import { PredictiveHealthScore } from '../components/PredictiveHealthScore';
+import { MaintenanceLog } from '../components/MaintenanceLog';
 import {
   Zap,
   Activity,
@@ -377,6 +378,9 @@ export const MachineDetailScreen: React.FC = () => {
           activeMetric={activeChartMetric}
         />
       </div>
+
+      {/* Maintenance & Service Log Section */}
+      <MaintenanceLog machine={selectedMachine} />
     </div>
   );
 };

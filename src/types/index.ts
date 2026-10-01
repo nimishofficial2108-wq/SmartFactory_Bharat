@@ -73,6 +73,30 @@ export interface AlertItem {
 
 export type SupportedLanguage = 'en' | 'hi' | 'pa' | 'mr' | 'gu' | 'ta' | 'te';
 
+export interface PartReplacement {
+  partName: string;
+  partNumber?: string;
+  quantity: number;
+  costINR: number;
+}
+
+export interface MaintenanceRecord {
+  id: string;
+  machineId: string;
+  serviceDate: string; // e.g. "2026-09-28"
+  technicianName: string;
+  technicianRole?: string;
+  serviceType: 'routine' | 'emergency' | 'predictive' | 'overhaul';
+  technicianNotes: string;
+  partReplacements: PartReplacement[];
+  totalCostINR: number;
+  downtimeHours?: number;
+  healthScoreBefore?: number;
+  healthScoreAfter?: number;
+  nextScheduledDate?: string;
+  status: 'completed' | 'in_progress' | 'scheduled';
+}
+
 export interface PredictiveHealthResult {
   score: number; // 0 - 100%
   timeToFailureHours: number; // operating hours

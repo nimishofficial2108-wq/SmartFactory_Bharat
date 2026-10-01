@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FactoryProvider, useFactory } from './context/FactoryContext';
+import { AIIntelligenceProvider } from './context/AIIntelligenceContext';
 import { NamastePreloader } from './components/NamastePreloader';
 import { Header } from './components/Header';
 import { Sidebar } from './components/Sidebar';
 import { AIAssistantDrawer } from './components/AIAssistantDrawer';
 import { OnboardingModal } from './components/OnboardingModal';
+import { AnomalyThresholdModal } from './components/ai-intelligence/AnomalyThresholdModal';
 
 import { DashboardScreen } from './screens/DashboardScreen';
 import { MachineDetailScreen } from './screens/MachineDetailScreen';
@@ -13,9 +15,12 @@ import { DigitalTwinScreen } from './screens/DigitalTwinScreen';
 import { AlertsScreen } from './screens/AlertsScreen';
 import { ReportsScreen } from './screens/ReportsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { MachineMonitorScreen } from './screens/MachineMonitorScreen';
+import { AIDigitalTwinScreen } from './screens/AIDigitalTwinScreen';
+import { CarbonMonitorScreen } from './screens/CarbonMonitorScreen';
 
 const MainLayout: React.FC = () => {
-  const { currentNav, showPreloader, theme } = useFactory();
+  const { currentNav, setCurrentNav, showPreloader, theme } = useFactory();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState<boolean>(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
@@ -49,6 +54,24 @@ const MainLayout: React.FC = () => {
         >
           <div className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto bg-grid-light dark:bg-grid-pattern/30">
             {currentNav === 'dashboard' && <DashboardScreen />}
+            {currentNav === 'machinemonitor' && (
+              <MachineMonitorScreen
+                onNavigateToDigitalTwin={() => setCurrentNav('aidigitaltwin')}
+                onNavigateToCarbonMonitor={() => setCurrentNav('carbonmonitor')}
+              />
+            )}
+            {currentNav === 'aidigitaltwin' && (
+              <AIDigitalTwinScreen
+                onNavigateToMonitor={() => setCurrentNav('machinemonitor')}
+                onNavigateToCarbonMonitor={() => setCurrentNav('carbonmonitor')}
+              />
+            )}
+            {currentNav === 'carbonmonitor' && (
+              <CarbonMonitorScreen
+                onNavigateToMonitor={() => setCurrentNav('machinemonitor')}
+                onNavigateToDigitalTwin={() => setCurrentNav('aidigitaltwin')}
+              />
+            )}
             {currentNav === 'machines' && <MachineDetailScreen />}
             {currentNav === 'pair' && <DevicePairingScreen />}
             {currentNav === 'digitaltwin' && <DigitalTwinScreen />}
@@ -64,6 +87,9 @@ const MainLayout: React.FC = () => {
 
       {/* Onboarding & Guided Tour Modal */}
       <OnboardingModal />
+
+      {/* Anomaly Threshold & Sensitivity Configuration Modal */}
+      <AnomalyThresholdModal />
     </div>
   );
 };
@@ -71,7 +97,9 @@ const MainLayout: React.FC = () => {
 export default function App() {
   return (
     <FactoryProvider>
-      <MainLayout />
+      <AIIntelligenceProvider>
+        <MainLayout />
+      </AIIntelligenceProvider>
     </FactoryProvider>
   );
 }

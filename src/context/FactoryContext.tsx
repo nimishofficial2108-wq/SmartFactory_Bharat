@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Machine, AlertItem, SupportedLanguage, ChatMessage, PredictiveHealthResult } from '../types';
+import {
+  Machine,
+  AlertItem,
+  SupportedLanguage,
+  ChatMessage,
+  PredictiveHealthResult,
+  MaintenanceRecord,
+} from '../types';
 import { translations, TranslationDictionary } from '../i18n/translations';
 
 interface FactoryContextType {
@@ -40,6 +47,8 @@ interface FactoryContextType {
   simulateService: (machineId: string) => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  maintenanceLogs: MaintenanceRecord[];
+  addMaintenanceRecord: (record: Omit<MaintenanceRecord, 'id'>) => void;
 }
 
 export function calculateMachineHealthScore(
@@ -260,6 +269,136 @@ const INITIAL_ALERTS: AlertItem[] = [
   },
 ];
 
+const INITIAL_MAINTENANCE_LOGS: MaintenanceRecord[] = [
+  // Machine 1: Hydraulic Press 200T
+  {
+    id: 'maint-1',
+    machineId: 'm1',
+    serviceDate: '12 Aug 2026',
+    technicianName: 'Ramesh Patil',
+    technicianRole: 'Senior Hydraulics Specialist',
+    serviceType: 'routine',
+    technicianNotes: 'Hydraulic oil flushed and replenished with ISO VG 68. Proportional valve seals inspected. Minor seepage at main cylinder gland packing tightened. Pressure relief valve calibrated to 210 bar.',
+    partReplacements: [
+      { partName: 'High-Pressure Gland O-Ring Kit', partNumber: 'SKF-902', quantity: 1, costINR: 3200 },
+      { partName: 'Hydraulic Oil (Servo System 68)', partNumber: 'IOC-VG68', quantity: 40, costINR: 8800 },
+      { partName: 'Return Line Suction Filter Element', partNumber: 'HY-200T-04', quantity: 1, costINR: 2200 },
+    ],
+    totalCostINR: 14200,
+    downtimeHours: 3.5,
+    healthScoreBefore: 82,
+    healthScoreAfter: 94,
+    nextScheduledDate: '12 Nov 2026',
+    status: 'completed',
+  },
+  {
+    id: 'maint-2',
+    machineId: 'm1',
+    serviceDate: '04 May 2026',
+    technicianName: 'Sunil Sharma',
+    technicianRole: 'Tooling & Alignment Engineer',
+    serviceType: 'overhaul',
+    technicianNotes: 'Platen bed parallelism checked (+-0.03mm across 1200mm platen). Ram guide phosphor bronze gibs adjusted to eliminate backlash. Calibrated inductive proximity sensor for blank stroke detection.',
+    partReplacements: [
+      { partName: 'Phosphor Bronze Wear Plates (Set of 4)', partNumber: 'PB-12-BRZ', quantity: 4, costINR: 18500 },
+      { partName: 'M18 Inductive Proximity Sensor', partNumber: 'Omron E2E-X5', quantity: 2, costINR: 4200 },
+      { partName: 'High-Tension Die Mounting Studs', partNumber: 'M24-GR10.9', quantity: 8, costINR: 5800 },
+    ],
+    totalCostINR: 28500,
+    downtimeHours: 6.0,
+    healthScoreBefore: 74,
+    healthScoreAfter: 91,
+    nextScheduledDate: '04 Aug 2026',
+    status: 'completed',
+  },
+
+  // Machine 2: Rotary Screw Compressor 45kW
+  {
+    id: 'maint-3',
+    machineId: 'm2',
+    serviceDate: '28 Sep 2026',
+    technicianName: 'Vikas Gaikwad',
+    technicianRole: 'Pneumatics Field Service Eng',
+    serviceType: 'predictive',
+    technicianNotes: 'Vibration spike diagnosed at 4.8 mm/s due to drive belt slack and pulley misalignment. Laser alignment performed. Recommended belt replacement & rubber vibration damper replacement before 15 Oct.',
+    partReplacements: [
+      { partName: 'Synthetic Poly-V Drive Belt', partNumber: 'ContiTech 8PK-1860', quantity: 1, costINR: 6500 },
+      { partName: 'Air/Oil Separator Spin-on Filter', partNumber: 'MANN-LB13145', quantity: 1, costINR: 7600 },
+      { partName: 'Neoprene Anti-Vibration Foot Bushings', partNumber: 'AV-M16-HD', quantity: 4, costINR: 4800 },
+    ],
+    totalCostINR: 18900,
+    downtimeHours: 2.0,
+    healthScoreBefore: 64,
+    healthScoreAfter: 76,
+    nextScheduledDate: '15 Oct 2026',
+    status: 'completed',
+  },
+  {
+    id: 'maint-4',
+    machineId: 'm2',
+    serviceDate: '15 Jun 2026',
+    technicianName: 'Amit Kulkarni',
+    technicianRole: 'Compressor Maintenance Tech',
+    serviceType: 'routine',
+    technicianNotes: '2000-hour periodic PM completed. Synthetic compressor lubricant replaced. Unloader solenoid valve coil tested for resistance (38.5 Ω, nominal). Intake air filter cleaned.',
+    partReplacements: [
+      { partName: 'Fully Synthetic Compressor Lubricant 20L', partNumber: 'Roto-Inject Ultra', quantity: 1, costINR: 8400 },
+      { partName: 'Oil Filter Cartridge', partNumber: 'AC-16136105', quantity: 1, costINR: 2800 },
+      { partName: 'Heavy-Duty Air Intake Filter Element', partNumber: 'C-15300', quantity: 1, costINR: 1200 },
+    ],
+    totalCostINR: 12400,
+    downtimeHours: 2.5,
+    healthScoreBefore: 78,
+    healthScoreAfter: 92,
+    nextScheduledDate: '15 Sep 2026',
+    status: 'completed',
+  },
+
+  // Machine 3: High-Speed Stirring Motor 15HP
+  {
+    id: 'maint-5',
+    machineId: 'm3',
+    serviceDate: '02 Sep 2026',
+    technicianName: 'Rajesh Shinde',
+    technicianRole: 'Certified Industrial Electrician',
+    serviceType: 'predictive',
+    technicianNotes: 'Bearing lubrication and electrical insulation assessment. Megger test showed 450 MΩ winding resistance. Bearings flushed and repacked with high-temperature Klüber grease.',
+    partReplacements: [
+      { partName: 'Deep Groove Ball Bearings (Drive End)', partNumber: 'SKF 6308-2Z/C3', quantity: 2, costINR: 4200 },
+      { partName: 'Klüber Isoflex Synthetic Grease Tube', partNumber: 'Topas NB52', quantity: 1, costINR: 1800 },
+      { partName: 'Silicone IP65 Terminal Box Gasket', partNumber: 'TB-GASKET-15HP', quantity: 1, costINR: 800 },
+    ],
+    totalCostINR: 6800,
+    downtimeHours: 1.5,
+    healthScoreBefore: 84,
+    healthScoreAfter: 96,
+    nextScheduledDate: '02 Dec 2026',
+    status: 'completed',
+  },
+
+  // Machine 4: Medium Induction Furnace 100kW
+  {
+    id: 'maint-6',
+    machineId: 'm4',
+    serviceDate: '22 Jul 2026',
+    technicianName: 'Mahendra Verma',
+    technicianRole: 'Thermal Systems Specialist',
+    serviceType: 'overhaul',
+    technicianNotes: 'Induction coil internal cooling channels de-scaled using dilute sulfamic acid flush. Cooling water flow rate restored to 120 LPM. Refractory crucible lining patched with high-alumina ramming mass.',
+    partReplacements: [
+      { partName: 'High-Temperature Silicon Water Hose Set', partNumber: 'SIL-HOSE-32MM', quantity: 6, costINR: 12400 },
+      { partName: 'Alumina Ramming Refractory Mix (50kg Bag)', partNumber: 'RAM-AL92', quantity: 2, costINR: 16000 },
+      { partName: 'Type-K Mineral Insulated Thermocouple', partNumber: 'TC-K-1200C', quantity: 2, costINR: 5600 },
+    ],
+    totalCostINR: 34000,
+    downtimeHours: 8.0,
+    healthScoreBefore: 72,
+    healthScoreAfter: 92,
+    nextScheduledDate: '22 Oct 2026',
+    status: 'completed',
+  },
+];
+
 const FactoryContext = createContext<FactoryContextType | undefined>(undefined);
 
 export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -275,9 +414,23 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [currentNav, setCurrentNav] = useState<string>('dashboard');
   const [servicedMachineIds, setServicedMachineIds] = useState<string[]>([]);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [maintenanceLogs, setMaintenanceLogs] = useState<MaintenanceRecord[]>(INITIAL_MAINTENANCE_LOGS);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const addMaintenanceRecord = (record: Omit<MaintenanceRecord, 'id'>) => {
+    const newRecord: MaintenanceRecord = {
+      ...record,
+      id: `maint-${Date.now()}`,
+    };
+    setMaintenanceLogs((prev) => [newRecord, ...prev]);
+
+    // If service was completed, also boost machine health
+    if (record.status === 'completed') {
+      simulateService(record.machineId);
+    }
   };
 
   // Mock Predictive Algorithm inside FactoryContext:
@@ -567,6 +720,24 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
           label: language === 'hi' ? 'नया बॉक्स जोड़ें' : 'Pair New Box Now',
           targetScreen: 'pair',
         };
+      } else if (
+        lower.includes('maint') ||
+        lower.includes('service') ||
+        lower.includes('सर्विस') ||
+        lower.includes('रखरखाव') ||
+        lower.includes('part') ||
+        lower.includes('technician') ||
+        lower.includes('पार्ट')
+      ) {
+        replyText =
+          language === 'hi'
+            ? 'मशीन डिटेल स्क्रीन में नया "Maintenance Log" सक्रिय है! आप सभी मशीनों के पिछले सर्विस रिकॉर्ड्स, तकनीशियन नोट्स, बदले गए स्पेयर पार्ट्स (जैसे O-रिंग, ड्राइव बेल्ट, बेयरिंग) और कुल खर्च (₹) देख सकते हैं और नया सर्विस लॉग भी दर्ज कर सकते हैं।'
+            : 'The Maintenance Log section is active in the Machine Detail screen! You can track past service dates, technician diagnosis notes, replaced spare parts (O-rings, belts, bearings), and record new service events with instant health score updates.';
+        quickAction = {
+          label: language === 'hi' ? 'सर्विस व मेंटेनेंस लॉग देखें' : 'View Machine Maintenance Log',
+          targetScreen: 'machines',
+          machineId: 'm1',
+        };
       } else {
         replyText =
           language === 'hi'
@@ -621,6 +792,8 @@ export const FactoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
         simulateService,
         theme,
         toggleTheme,
+        maintenanceLogs,
+        addMaintenanceRecord,
       }}
     >
       {children}

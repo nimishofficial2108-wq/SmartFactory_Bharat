@@ -13,6 +13,10 @@ import {
   PanelLeftClose,
   PanelLeft,
   Search,
+  Gauge,
+  BrainCircuit,
+  Sparkles,
+  Leaf,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -49,6 +53,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
       badge: null,
     },
     {
+      id: 'machinemonitor',
+      label: 'Machine Monitor',
+      icon: Gauge,
+      badge: 'Live',
+      badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
+    },
+    {
+      id: 'aidigitaltwin',
+      label: 'AI Digital Twin',
+      icon: BrainCircuit,
+      badge: 'AI Core',
+      badgeColor: 'bg-purple-50 text-purple-700 dark:bg-purple-500/10 dark:text-purple-400 border border-purple-200 dark:border-purple-800',
+    },
+    {
+      id: 'carbonmonitor',
+      label: 'Carbon Monitor',
+      icon: Leaf,
+      badge: 'ESG',
+      badgeColor: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700',
+    },
+    {
       id: 'machines',
       label: t.navMachines,
       icon: Cpu,
@@ -65,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'digitaltwin',
       label: t.navDigitalTwin,
       icon: Activity,
-      badge: 'Live',
+      badge: 'Sim',
       badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
     },
     {

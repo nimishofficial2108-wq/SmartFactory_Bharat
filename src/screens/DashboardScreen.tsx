@@ -21,7 +21,13 @@ import {
   RotateCcw,
   Sliders,
   ShieldAlert,
+  Gauge,
+  BrainCircuit,
+  Leaf,
+  Flame,
 } from 'lucide-react';
+import { useAIIntelligence } from '../context/AIIntelligenceContext';
+import { ProactiveAlertBanner } from '../components/ai-intelligence/ProactiveAlertBanner';
 
 export const DashboardScreen: React.FC = () => {
   const {
@@ -35,6 +41,18 @@ export const DashboardScreen: React.FC = () => {
     setIsAiDrawerOpen,
     sendChatMessage,
   } = useFactory();
+
+  const {
+    carbonPassports,
+    factoryTopHotspotAssetsPct,
+    factoryTotalCarbonEmittedKg,
+    factoryIdleCarbonLossKg,
+    carbonPredictiveNotice,
+    scenario,
+    setScenario,
+    setIsThresholdModalOpen,
+    activeThresholdBreaches,
+  } = useAIIntelligence();
 
   // Prompt bar state (ChatGPT hero style)
   const [promptText, setPromptText] = useState<string>('');
@@ -68,6 +86,16 @@ export const DashboardScreen: React.FC = () => {
     language === 'hi'
       ? [
           {
+            label: '⚙️ एनोमली थ्रेशोल्ड कॉन्फिगरेशन?',
+            query: 'मशीन के वाइब्रेशन, टेम्परेचर और करंट के लिए कस्टम थ्रेशोल्ड और सेंसिटिविटी कैसे सेट करें?',
+            icon: Sliders,
+          },
+          {
+            label: '🌱 कार्बन मॉनिटर व हॉटस्पॉट्स?',
+            query: 'Factory ke 60% carbon emissions kaunse assets se aa rahe hain aur carbon-aware maintenance kya hai?',
+            icon: Leaf,
+          },
+          {
             label: 'कंप्रेसर में चेतावनी क्यों है?',
             query: 'रोटरी स्क्रू कंप्रेसर 45kW में चेतावनी का क्या कारण है और क्या करें?',
             icon: AlertTriangle,
@@ -82,13 +110,18 @@ export const DashboardScreen: React.FC = () => {
             query: 'सभी 4 मशीनों का प्रेडिक्टिव हेल्थ स्कोर और ब्रेकडाउन का अनुमान बताओ',
             icon: Activity,
           },
-          {
-            label: 'नया IoT बॉक्स कैसे लगाएं?',
-            query: 'नॉन-इन्वेंसिव मैग्नेटिक रेट्रोफिट बॉक्स को मशीन पर कैसे क्लिप करें?',
-            icon: Cpu,
-          },
         ]
       : [
+          {
+            label: '⚙️ Anomaly Threshold Ranges',
+            query: 'How to configure custom sensitivity thresholds for machine vibration, temperature, and current?',
+            icon: Sliders,
+          },
+          {
+            label: '🌱 Carbon Monitor & Hotspots',
+            query: 'Which assets cause 60% plant emissions and how does carbon-aware predictive maintenance work?',
+            icon: Leaf,
+          },
           {
             label: 'Why is Compressor #2 warning?',
             query: 'Why is the Rotary Screw Compressor 45kW showing a vibration warning?',
@@ -104,11 +137,6 @@ export const DashboardScreen: React.FC = () => {
             query: 'What is the longevity forecast and failure risk across our 4 machines?',
             icon: Activity,
           },
-          {
-            label: 'How to clip a new retrofit box?',
-            query: 'How does universal non-invasive installation work with zero rewiring?',
-            icon: Cpu,
-          },
         ];
 
   const handleExecutePrompt = (query: string) => {
@@ -121,7 +149,67 @@ export const DashboardScreen: React.FC = () => {
       setIsAiLoading(false);
       const q = query.toLowerCase();
 
-      if (q.includes('compressor') || q.includes('vibration') || q.includes('कंप्रेसर') || q.includes('चेतावनी')) {
+      if (
+        q.includes('threshold') ||
+        q.includes('sensitivity') ||
+        q.includes('थ्रेशोल्ड') ||
+        q.includes('सीमा') ||
+        q.includes('सेंसिटिविटी') ||
+        q.includes('setpoint')
+      ) {
+        setInlineAiAnswer({
+          query,
+          answer:
+            language === 'hi'
+              ? 'स्मार्टफैक्ट्री एनोमली थ्रेशोल्ड कॉन्फिगरेशन मॉड्यूल से आप प्रत्येक मशीन के लिए वाइब्रेशन (MPU6050), तापमान (DS18B20/MLX90614) और करंट (SCT-013) की कस्टम संवेदनशीलता निर्धारित कर सकते हैं:'
+              : 'The SmartFactory Anomaly Threshold Configuration system lets you establish precision sensitivity boundaries for machine vibration, temperature, and current:',
+          points:
+            language === 'hi'
+              ? [
+                  'सेंसिटिविटी मोड्स: High (सख्त ±10%), Medium (मानक ±25%), और Low (टॉलरेंट ±40%) या कस्टम न्यूमेरिकल स्लाइडर।',
+                  'वाइब्रेशन सेटपॉइंट: ISO 10816 मानकों के अनुसार अर्ली वियर (Warning) और गंभीर अनबैलेंस (Critical) का स्तर सेट करें।',
+                  'तापमान व करंट सेटपॉइंट: बेयरिंग घर्षण और ओवरलोड के प्रारंभिक संकेतों पर स्वचालित प्रोएक्टिव मेंटेनेंस अलर्ट ट्रिगर होते हैं।',
+                  'प्रोएक्टिव अलर्ट्स: थ्रेशोल्ड क्रॉस होते ही AI इंजन संभावित कारण, तात्कालिक कार्ययोजना और अनुमानित जोखिम (₹) का अलर्ट जारी करता है।',
+                ]
+              : [
+                  'Sensitivity Presets: High (Strict ±10%), Medium (Standard ±25%), Low (Tolerant ±40%), or custom manual sliders.',
+                  'Vibration RMS: Configurable warning and critical bounds (mm/s) based on ISO 10816 mechanical envelopment.',
+                  'Temperature & Current: Continuous telemetry bounds prevent thermal breakdown and electrical overload.',
+                  'AI Proactive Maintenance: Instant root cause attribution, urgent inspection timeframe, and avoidable cost quantification (₹).',
+                ],
+          actionLabel: language === 'hi' ? 'थ्रेशोल्ड कॉन्फ़िगर करें' : 'Configure Anomaly Thresholds',
+          actionNav: 'open_threshold_modal',
+        });
+      } else if (
+        q.includes('carbon') ||
+        q.includes('hotspot') ||
+        q.includes('passport') ||
+        q.includes('co2') ||
+        q.includes('कार्बन') ||
+        q.includes('उत्सर्जन')
+      ) {
+        setInlineAiAnswer({
+          query,
+          answer:
+            language === 'hi'
+              ? 'कारखाने के 60% से अधिक कार्बन उत्सर्जन सिर्फ 4 प्रमुख एसेट्स से आ रहे हैं — विशेष रूप से रोटरी स्क्रू कंप्रेसर 45kW (SF-COMP-02) अकेला 30.8% कार्बन उत्सर्जित कर रहा है और 96.7 kg CO₂ आइडल चक्र में व्यर्थ कर रहा है।'
+              : 'Over 60% of factory carbon emissions stem from just 4 primary assets — primarily Rotary Screw Compressor 45kW (SF-COMP-02) emitting 30.8% of plant CO₂ and losing 96.7 kg CO₂ in idle motor spin.',
+          points:
+            language === 'hi'
+              ? [
+                  'मशीन-लेवल कार्बन पासपोर्ट: प्रत्येक मशीन का kWh, kg CO₂ (CEA 0.82 kg/kWh), यूनिट उत्पादन फुटप्रिंट और आइडल नुकसान लाइव ट्रैक होता है।',
+                  'कार्बन हॉटस्पॉट हीटमैप: कारखाने का 4-बे डिजिटल लेआउट ग्रीन ➔ येलो ➔ रेड में प्रदर्शित करता है कि कौनसी मशीनें तुलनात्मक रूप से ज्यादा कार्बन निकाल रही हैं।',
+                  'कार्बन-अवेयर प्रेडिक्टिव मेंटेनेंस: "Bearing 20 days me fail ho sakta hai" के स्थान पर सिस्टम अतिरिक्त रूप से बताता है: "Bearing degradation ke wajah se motor 9% extra energy consume kar rahi hai, causing ₹18,000/year avoidable energy cost and 1.3 tCO₂ extra emissions."',
+                ]
+              : [
+                  'Machine-Level Carbon Passport: Live kWh, kg CO₂ (India CEA 0.82 factor), unit production footprint, and idle carbon loss per asset.',
+                  'Carbon Hotspot Heatmap: 4-bay digital factory layout color-graded Green ➔ Yellow ➔ Red exposing that 60% of emissions come from just 4 major assets.',
+                  'Carbon-Aware Predictive Maintenance: Replaces generic failure warnings with exact energy and carbon impact: "Bearing degradation ke wajah se motor 9% extra energy consume kar rahi hai, causing ₹18,000/year avoidable energy cost and 1.3 tCO₂ extra emissions."',
+                ],
+          actionLabel: language === 'hi' ? 'कार्बन मॉनिटर खोलें (तीनों फीचर्स)' : 'Open Carbon Monitor (All 3 Features)',
+          actionNav: 'carbonmonitor',
+        });
+      } else if (q.includes('compressor') || q.includes('vibration') || q.includes('कंप्रेसर') || q.includes('चेतावनी')) {
         setInlineAiAnswer({
           query,
           answer:
@@ -350,7 +438,11 @@ export const DashboardScreen: React.FC = () => {
                 {inlineAiAnswer.actionLabel && (
                   <button
                     onClick={() => {
-                      if (inlineAiAnswer.actionNav) setCurrentNav(inlineAiAnswer.actionNav);
+                      if (inlineAiAnswer.actionNav === 'open_threshold_modal') {
+                        setIsThresholdModalOpen(true);
+                      } else if (inlineAiAnswer.actionNav) {
+                        setCurrentNav(inlineAiAnswer.actionNav);
+                      }
                       if (inlineAiAnswer.actionMachineId) setSelectedMachineId(inlineAiAnswer.actionMachineId);
                     }}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold hover:scale-105 active:scale-95 transition-all shadow-xs"
@@ -374,6 +466,78 @@ export const DashboardScreen: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* FEATURE: AI Machine Intelligence (Machine Monitor & AI Digital Twin)       */}
+      {/* ========================================================================= */}
+      <div className="p-5 md:p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-purple-950 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold uppercase tracking-wider">
+              ● Live ESP32 Simulation
+            </span>
+            <span className="text-[10px] text-slate-400 font-mono">Demo Data</span>
+          </div>
+          <h2 className="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+            <span>AI Machine Intelligence</span>
+          </h2>
+          <p className="text-xs text-slate-300 max-w-xl leading-relaxed">
+            Non-Invasive Industrial Monitoring & Predictive Intelligence: SCT-013 current, MPU6050 vibration, DS18B20 & MLX90614 thermal, and INMP441 acoustic telemetry pipeline.
+          </p>
+        </div>
+
+        {/* Access Buttons to the Module */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Button 1: Machine Monitor */}
+          <button
+            onClick={() => setCurrentNav('machinemonitor')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white hover:bg-slate-100 text-slate-950 text-xs font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <Gauge className="w-4 h-4 text-emerald-600" />
+            <span>Machine Monitor</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Button 2: AI Digital Twin */}
+          <button
+            onClick={() => setCurrentNav('aidigitaltwin')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            <BrainCircuit className="w-4 h-4 text-purple-200" />
+            <span>AI Digital Twin</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Button 3: Carbon Monitor (Machine Carbon Passports, Heatmap, ESG) */}
+          <button
+            onClick={() => setCurrentNav('carbonmonitor')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-md hover:scale-[1.03] active:scale-[0.98] transition-all"
+          >
+            <Leaf className="w-4 h-4 text-slate-950" />
+            <span>Carbon Monitor</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-950 text-emerald-400 font-mono font-bold">
+              3-in-1 ESG
+            </span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Button 4: Sensitivity Thresholds */}
+          <button
+            onClick={() => setIsThresholdModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-purple-200 text-xs font-semibold border border-purple-500/30 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all"
+            title="Configure custom sensitivity thresholds for vibration, temp & current"
+          >
+            <Sliders className="w-3.5 h-3.5 text-purple-400" />
+            <span>Sensitivity Thresholds</span>
+            {activeThresholdBreaches && activeThresholdBreaches.length > 0 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Proactive Threshold Breach Alerts from AI Engine */}
+      <ProactiveAlertBanner />
 
       {/* ========================================================================= */}
       {/* 5 SUMMARY CARDS: Crisp, Light, High Readability                           */}
@@ -483,6 +647,152 @@ export const DashboardScreen: React.FC = () => {
             </div>
             <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 font-medium">
               {activeAlertsCount > 0 ? 'Click to inspect alerts' : 'No pending warnings'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* FEATURE SPOTLIGHT: Carbon Monitor & Hotspot Intelligence (All 3 Features) */}
+      {/* ========================================================================= */}
+      <div className="p-5 md:p-6 rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-slate-900 text-white border border-[#00000012] dark:border-slate-800 shadow-md space-y-5">
+        {/* Header with Title and Big Access Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold uppercase tracking-wider flex items-center gap-1">
+                <Leaf className="w-3 h-3 text-emerald-400" />
+                ESG & Carbon Intelligence Suite
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">
+                India CEA Grid Factor: 0.82 kg CO₂/kWh
+              </span>
+            </div>
+            <h2 className="text-lg md:text-xl font-bold tracking-tight text-white flex items-center gap-2">
+              <span>Plant Carbon Monitor & Hotspot Intelligence</span>
+            </h2>
+            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+              Machine-level carbon passports, spatial hotspot heatmap, and carbon-aware predictive maintenance — सब एक ही इंटीग्रेटेड मॉड्यूल में।
+            </p>
+          </div>
+
+          <button
+            onClick={() => setCurrentNav('carbonmonitor')}
+            className="flex items-center gap-2 px-5 py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg hover:scale-105 active:scale-95 transition-all self-start sm:self-auto shrink-0"
+          >
+            <Leaf className="w-4 h-4 fill-slate-950 text-slate-950" />
+            <span>Open Carbon Monitor (तीनों फीचर्स)</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* 3 Core Features Integrated Preview Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Feature 1: Machine-Level Carbon Passport */}
+          <div
+            onClick={() => setCurrentNav('carbonmonitor')}
+            className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-emerald-500/40 transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+          >
+            <div>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <Leaf className="w-3.5 h-3.5" />
+                  1. Machine Carbon Passport
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">
+                  Live Stream
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                प्रत्येक मशीन का लाइव “कार्बन पासपोर्ट”: <strong>kWh</strong>, <strong>CO₂ emitted</strong>, <strong>CO₂ per unit produced</strong>, <strong>idle carbon loss</strong>, और <strong>efficiency trend</strong>।
+              </p>
+
+              <div className="mt-3 p-2.5 rounded-xl bg-black/40 border border-white/10 space-y-1.5 font-mono text-[11px]">
+                <div className="flex justify-between items-center text-slate-300">
+                  <span>SF-PRESS-01 (Hydraulic):</span>
+                  <span className="text-emerald-400 font-bold">14.2 g CO₂/part · B+</span>
+                </div>
+                <div className="flex justify-between items-center text-amber-300">
+                  <span>SF-COMP-02 (Compressor):</span>
+                  <span className="text-red-400 font-bold">96.7 kg Idle Loss · Grade D</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-emerald-300/90 font-medium group-hover:text-emerald-300 flex items-center justify-between pt-1">
+              <span>Disproportionate emission tracking</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </p>
+          </div>
+
+          {/* Feature 2: Carbon Hotspot Heatmap */}
+          <div
+            onClick={() => setCurrentNav('carbonmonitor')}
+            className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-red-500/40 transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+          >
+            <div>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-red-400">
+                  <Flame className="w-3.5 h-3.5" />
+                  2. Carbon Hotspot Heatmap
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-300">
+                  Green ➔ Yellow ➔ Red
+                </span>
+              </div>
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                कारखाने का डिजिटल लेआउट जहाँ मशीनें एनर्जी व कार्बन इंटेंसिटी के आधार पर ग्रीन से रेड में प्रदर्शित होती हैं।
+              </p>
+
+              {/* Prominent Callout Quote */}
+              <div className="mt-3 p-2.5 rounded-xl bg-red-500/20 border border-red-500/30 text-white font-medium text-xs leading-snug">
+                “Factory ke 60% carbon emissions sirf 4 major assets se aa rahe hain.”
+                <span className="text-[10px] text-slate-300 font-mono block mt-1">
+                  Top Hotspot: Rotary Screw Compressor (30.8% of emissions)
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-red-300/90 font-medium group-hover:text-red-300 flex items-center justify-between pt-1">
+              <span>View spatial floor plan heatmap</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            </p>
+          </div>
+
+          {/* Feature 3: Carbon-Aware Predictive Maintenance */}
+          <div
+            onClick={() => setCurrentNav('carbonmonitor')}
+            className="p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-500/40 transition-all cursor-pointer flex flex-col justify-between space-y-3 group"
+          >
+            <div>
+              <div className="flex items-center justify-between pb-2 border-b border-white/10 text-xs font-semibold">
+                <span className="flex items-center gap-1.5 text-amber-400">
+                  <BrainCircuit className="w-3.5 h-3.5" />
+                  3. Carbon-Aware Predictive Maint.
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300">
+                  Rupee + CO₂ Fusion
+                </span>
+              </div>
+
+              {/* Side-by-Side Comparison Box */}
+              <div className="mt-2.5 space-y-2">
+                <div className="p-2 rounded-xl bg-black/40 border border-white/10">
+                  <span className="text-[10px] text-slate-400 uppercase font-mono block">Normal Alert:</span>
+                  <p className="text-[11px] text-slate-300 italic">“Bearing 20 days me fail ho sakta hai.”</p>
+                </div>
+                <div className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/40">
+                  <span className="text-[10px] text-emerald-300 uppercase font-mono font-bold block">SmartFactory Carbon Alert:</span>
+                  <p className="text-[11px] text-white font-semibold">
+                    “Bearing degradation ke wajah se motor 9% extra energy consume kar rahi hai, causing ₹18,000/year avoidable energy cost and 1.3 tCO₂ extra emissions.”
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-amber-300/90 font-medium group-hover:text-amber-300 flex items-center justify-between pt-1">
+              <span>Inspect quantifiable energy & carbon impact</span>
+              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </p>
           </div>
         </div>
