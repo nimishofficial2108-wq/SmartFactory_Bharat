@@ -18,6 +18,7 @@ import {
   Sparkles,
   Leaf,
   Sun,
+  Flame,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -80,6 +81,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Sun,
       badge: 'Smart Energy',
       badgeColor: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-800',
+    },
+    {
+      id: 'thermoroute',
+      label: 'ThermoRoute AI',
+      icon: Flame,
+      badge: 'Heat Recovery',
+      badgeColor: 'bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400 border border-orange-200 dark:border-orange-800',
+    },
+    {
+      id: 'fuelflex',
+      label: 'FuelFlex AI',
+      icon: Leaf,
+      badge: 'Decarbonisation',
+      badgeColor: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800',
     },
     {
       id: 'machines',

@@ -19,6 +19,8 @@ import { MachineMonitorScreen } from './screens/MachineMonitorScreen';
 import { AIDigitalTwinScreen } from './screens/AIDigitalTwinScreen';
 import { CarbonMonitorScreen } from './screens/CarbonMonitorScreen';
 import { SolarSyncScreen } from './screens/SolarSyncScreen';
+import { ThermoRouteScreen } from './screens/ThermoRouteScreen';
+import { FuelFlexScreen } from './screens/FuelFlexScreen';
 
 const MainLayout: React.FC = () => {
   const { currentNav, setCurrentNav, showPreloader, theme } = useFactory();
@@ -74,6 +76,8 @@ const MainLayout: React.FC = () => {
               />
             )}
             {currentNav === 'solarsync' && <SolarSyncScreen />}
+            {currentNav === 'thermoroute' && <ThermoRouteScreen />}
+            {currentNav === 'fuelflex' && <FuelFlexScreen />}
             {currentNav === 'machines' && <MachineDetailScreen />}
             {currentNav === 'pair' && <DevicePairingScreen />}
             {currentNav === 'digitaltwin' && <DigitalTwinScreen />}
