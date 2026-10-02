@@ -1,0 +1,8 @@
+{
+  "name": "SmartFactory Bharat - Industrial IoT Retrofit",
+  "description": "Non-invasive IoT retrofit monitoring box for Indian SME manufacturing. Live sensor telemetry, 3D digital twin, multi-language support, and AI factory assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
